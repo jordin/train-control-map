@@ -14,8 +14,8 @@ y_padding = 10
 x_coord = -5.33
 y_coord = -0.5
 
-pos_x = -100
-pos_y = -100
+pos_x = 100
+pos_y = 100
 direction = 'n'
 
 send_queue = []
@@ -23,11 +23,10 @@ send_queue = []
 def do_the_serial():
     global ser, send_queue
     ser = serial.Serial('COM3', 115200, timeout = 0)
-        
+
     while (ser.is_open):
         for i in send_queue:
             ser.write(i)
-            print(i)
         send_queue.clear()
         while (ser.in_waiting):
             l = ser.read()
@@ -45,11 +44,16 @@ def set_station(n):
 
 def go(): 
     global send_queue, drop_down
-    send_queue.append(drop_down.get())
+    n = int(drop_down.get())
+    send_queue.append(n)
+    set_station(n)
 
 def process_updates(root, state):
     global pos_x, pos_y, direction, ser
  
+    t = threading.Thread(target = do_the_serial)
+    t.start()
+    
     try:
         while True:
             trainimg = ImageTk.PhotoImage(file = f"img/train-{direction}.png")
@@ -59,7 +63,8 @@ def process_updates(root, state):
             yield
             canvas.delete(train)
     except:
-        ser.close()
+        pass
+        #ser.close()
    
 def show():
     global drop_down
@@ -72,22 +77,20 @@ def show():
 
     background = ImageTk.PhotoImage(file = "img/map.png")
     canvas.create_image(x_padding, y_padding, image = background, anchor="nw")
-
+  
     drop_down = tk.StringVar(root)
     drop_down.set("1")
     option = tk.OptionMenu(root, drop_down, "1", "2", "3", "4")
     option.pack()
-
     button = tk.Button(root, text = "Go!", command = go)
     button.pack()
 
-    t = threading.Thread(target = do_the_serial)
-    t.start()
-    
     state = {}
     state["next"] = process_updates(root, state).__next__
 
     root.after(1, state["next"])
+
+    
     root.mainloop()
 
 show()

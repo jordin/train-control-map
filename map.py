@@ -18,7 +18,6 @@ pos_x = -100
 pos_y = -100
 direction = 'n'
 
-
 send_queue = []
 
 def do_the_serial():
@@ -44,27 +43,13 @@ def set_station(n):
     pos_y = y_padding + station[1]
     direction = station[2]
 
-def go(n): 
-    global send_queue
-    print(n)
-    # send_queue.append()
-
+def go(): 
+    global send_queue, drop_down
+    send_queue.append(drop_down.get())
 
 def process_updates(root, state):
-    global pos_x, pos_y, direction, ser, var
-    # canvas = tk.Canvas(root, width = 1366, height = 768)
-    canvas = tk.Canvas(root, width = 600, height = 200)
-    canvas.pack()
-
-    # background = ImageTk.PhotoImage(file = "img/map.png")
-    # canvas.create_image(x_padding, y_padding, image = background, anchor="nw")
-
-    button = tk.Button(root, text = "Go", command = go, args = (5,))
-    button.pack()
-
-    t = threading.Thread(target = do_the_serial)
-    t.start()
-
+    global pos_x, pos_y, direction, ser
+ 
     try:
         while True:
             trainimg = ImageTk.PhotoImage(file = f"img/train-{direction}.png")
@@ -76,11 +61,29 @@ def process_updates(root, state):
     except:
         ser.close()
    
-
 def show():
+    global drop_down
     root = tk.Tk()
     root.title('ECED4402 - Assigment 3 - Map')
     # root.attributes("-fullscreen", True)
+
+    canvas = tk.Canvas(root, width = 1366, height = 768)
+    canvas.pack()
+
+    background = ImageTk.PhotoImage(file = "img/map.png")
+    canvas.create_image(x_padding, y_padding, image = background, anchor="nw")
+
+    drop_down = tk.StringVar(root)
+    drop_down.set("1")
+    option = tk.OptionMenu(root, drop_down, "1", "2", "3", "4")
+    option.pack()
+
+    button = tk.Button(root, text = "Go!", command = go)
+    button.pack()
+
+    t = threading.Thread(target = do_the_serial)
+    t.start()
+    
     state = {}
     state["next"] = process_updates(root, state).__next__
 

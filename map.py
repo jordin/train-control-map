@@ -10,10 +10,11 @@ port = None
 baud_rate = 115200
 
 img_width = 1160
-img_height = 566
+img_height = 513
 
-x_padding = (1366 - img_width) / 2
-y_padding = 10
+x_padding = 5
+y_padding = 5
+y_offset = 26
 
 pos_x = 100
 pos_y = 100
@@ -63,26 +64,28 @@ def set_station(n):
     if n in station_ids:
         station = stations[n]
         pos_x = x_padding + station[0]
-        pos_y = y_padding + station[1]
+        pos_y = y_padding + station[1] - y_offset
         direction = station[2]
 
 def go(n): 
     global send_queue
     send_queue.append(n)
     print(f"Going to: {n}")
+    set_station(n)
 
 def process_updates(root, state):
-    global pos_x, pos_y, direction, ser
-    canvas = tk.Canvas(root, width = 1366, height = 768)
+    global pos_x, pos_y, direction, ser, img_width, img_height
+    canvas = tk.Canvas(root, width = img_width + 2 * x_padding, height = img_height + 2 * y_padding)
     canvas.pack()
 
     background = ImageTk.PhotoImage(file = "img/map.png")
     canvas.create_image(x_padding, y_padding, image = background, anchor="nw")
 
+    btn_size = 32
     for i in range(1, 25):
         station = stations[i - 1]
         button = tk.Button(root, text = f"{i}", command = lambda n=i: go(n))
-        button.place(x = x_padding + station[0], y = y_padding + station[1], anchor="n")
+        button.place(x = x_padding + station[0], y = y_padding + station[1] - y_offset, anchor="center", height = btn_size, width = btn_size)
 
     t = threading.Thread(target = do_the_serial)
     t.daemon = True

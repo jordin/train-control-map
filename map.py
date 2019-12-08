@@ -26,8 +26,6 @@ if len(sys.argv) > 1:
 if len(sys.argv) > 2:
     baud_rate = int(sys.argv[2])
 
-print(serial.tools.list_ports.comports())
-
 def do_the_serial():
     global ser, send_queue, port
     if port is None:

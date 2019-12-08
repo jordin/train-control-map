@@ -1,3 +1,5 @@
+station_ids = range(24)
+
 stations = [
     (217, 496, 'w'),
     (395, 496, 'w'),

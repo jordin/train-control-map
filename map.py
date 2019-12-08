@@ -1,10 +1,13 @@
 from PIL import Image, ImageTk
-from stations import stations
+from stations import stations, station_ids
+import serial.tools.list_ports
+import threading, sys, os
 import tkinter as tk
-import threading
 import serial
 import time
-import sys
+
+port = None
+baud_rate = 115200
 
 img_width = 1160
 img_height = 566
@@ -17,45 +20,58 @@ pos_y = 100
 direction = 'n'
 
 send_queue = []
+if len(sys.argv) > 1:
+    port = sys.argv[1]
 
-if len(sys.argv) < 2:
-    print("Please specify a COM port")
-    exit()
+if len(sys.argv) > 2:
+    baud_rate = int(sys.argv[2])
+
+print(serial.tools.list_ports.comports())
 
 def do_the_serial():
-    global ser, send_queue
-    print("starting com")
+    global ser, send_queue, port
+    if port is None:
+        ports = serial.tools.list_ports.comports()
+        if not ports:
+            print("No available COM port found. Aborting.")
+            os._exit(1)
+        print(f"Found: {' '.join(map(lambda p: p.device, ports))}")
+        port = ports[0].device 
+
+    print(f"Using {port} at {baud_rate} bits per second")
     
-    ser = serial.Serial(f'COM{sys.argv[1]}', 115200)
-   
-    print("com works")
+    ser = serial.Serial(port, baud_rate)
+
     while (ser.is_open):
         for i in send_queue:
             s = str(i).encode()
             ser.write(s)
-            ser.write(13)
-            print(f"send: {s}")
+            ser.write(0x0D)
+            print(f"Sending: {s}")
+
         send_queue.clear()
+
         while (ser.in_waiting):
             l = ser.read()
             n = int(l[0])
-            print(f"recv {n}")
-            if (n >= 1 and n <= 24):
-                set_station(n)
+            print(f"Received: {n}")
+            set_station(n)
+
         time.sleep(0.01)
 
 def set_station(n):
-    global stations, pos_x, pos_y, direction
-    station = stations[n - 1]
-    pos_x = x_padding + station[0]
-    pos_y = y_padding + station[1]
-    direction = station[2]
+    global stations, station_ids, pos_x, pos_y, direction
+    n = n - 1
+    if n in station_ids:
+        station = stations[n]
+        pos_x = x_padding + station[0]
+        pos_y = y_padding + station[1]
+        direction = station[2]
 
 def go(n): 
-    global send_queue, drop_down
+    global send_queue
     send_queue.append(n)
-    print(f"Q {n}")
-    # set_station(n)
+    print(f"Going to: {n}")
 
 def process_updates(root, state):
     global pos_x, pos_y, direction, ser
@@ -86,25 +102,14 @@ def process_updates(root, state):
         ser.close()
    
 def show():
-    global drop_down
     root = tk.Tk()
     root.title('ECED4402 - Assigment 3 - Map')
     # root.attributes("-fullscreen", True)
-
-    """
-    drop_down = tk.StringVar(root)
-    drop_down.set("1")
-    option = tk.OptionMenu(root, drop_down, "1", "2", "3", "4")
-    option.pack()
-    button = tk.Button(root, text = "Go!", command = go)
-    button.pack()
-    """
     state = {}
     state["next"] = process_updates(root, state).__next__
 
     root.after(1, state["next"])
 
-    
     root.mainloop()
 
 try:

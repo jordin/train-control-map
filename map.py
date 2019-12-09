@@ -1,5 +1,5 @@
 from PIL import Image, ImageTk
-from stations import stations, station_ids
+from stations import stations, station_ids, station_offset
 import serial.tools.list_ports
 import threading, sys, os
 import tkinter as tk
@@ -21,23 +21,27 @@ pos_y = 100
 direction = 'n'
 
 send_queue = []
+
 if len(sys.argv) > 1:
     port = sys.argv[1]
 
 if len(sys.argv) > 2:
     baud_rate = int(sys.argv[2])
 
+def log(msg):
+    print(msg, flush=True)
+
 def do_the_serial():
     global ser, send_queue, port
     if port is None:
         ports = serial.tools.list_ports.comports()
         if not ports:
-            print("No available COM port found. Aborting.")
+            log("No available COM port found. Aborting.")
             os._exit(1)
-        print(f"Found: {' '.join(map(lambda p: p.device, ports))}")
+        log(f"Found: {' '.join(map(lambda p: p.device, ports))}")
         port = ports[0].device 
 
-    print(f"Using {port} at {baud_rate} bits per second")
+    log(f"Using {port} at {baud_rate} bits per second")
     
     ser = serial.Serial(port, baud_rate)
 
@@ -46,14 +50,14 @@ def do_the_serial():
             s = str(i).encode()
             ser.write(s)
             ser.write(0x0D)
-            print(f"Sending: {s}")
+            log(f"Sending: {s}")
 
         send_queue.clear()
 
         while (ser.in_waiting):
             l = ser.read()
             n = int(l[0])
-            print(f"Received: {n}")
+            log(f"Received: {n}")
             set_station(n)
 
         time.sleep(0.01)
@@ -68,10 +72,10 @@ def set_station(n):
         direction = station[2]
 
 def go(n): 
-    global send_queue
-    send_queue.append(n)
-    print(f"Going to: {n}")
-    set_station(n)
+    global send_queue, station_offset
+    send_queue.append(n + station_offset)
+    log(f"Going to: {n}")
+    # set_station(n)
 
 def process_updates(root, state):
     global pos_x, pos_y, direction, ser, img_width, img_height
@@ -101,6 +105,7 @@ def process_updates(root, state):
             canvas.delete(train)
     except:
         ser.close()
+        os._exit(1)
    
 def show():
     root = tk.Tk()
@@ -116,4 +121,4 @@ def show():
 try:
     show()
 except:
-    pass
+    os._exit(1)

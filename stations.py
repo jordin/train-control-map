@@ -1,7 +1,18 @@
+"""
+Programmer: Jordin McEachern & Serge Toutsenko
+Program: train machine map
+Created on: 2019-12-06
+File: stations.py
+Description: stores the positions of all the stations
+"""
+# available station range
 station_ids = range(24)
 
+# numerical offset to force all stations to be two-digits
+# this simplifies the parsing for the train machine
 station_offset = 10
 
+# station coordinates and direction
 stations = [
     (217, 496, 'w'),
     (395, 496, 'w'),

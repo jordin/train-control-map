@@ -27,7 +27,7 @@ y_padding = 5
 # fine-tuned positioning for the station buttons
 y_offset = 26
 
-# initial train position (off screen)
+# train position (initially off screen)
 pos_x = -100
 pos_y = -100
 direction = 'n'
@@ -82,17 +82,17 @@ def do_the_serial():
             set_station(n)
 
         time.sleep(0.01)
+
     # ser.is_open = False
     # close application when serial port closes    
     os._exit(1)
 
-
 # updates the map to reflect arriving at a station
 def set_station(n):
     global stations, station_ids, pos_x, pos_y, direction
-    n = n - 1
+    n = n - 1 # station number n corresponds to station index n - 1
     if n in station_ids:
-        station = stations[n]
+        station = stations[n] # (x, y, dir)
         pos_x = x_padding + station[0]
         pos_y = y_padding + station[1] - y_offset
         direction = station[2]
@@ -103,7 +103,6 @@ def go(n):
     global send_queue, station_offset
     send_queue.append(n + station_offset)
     log(f"Going to: {n}")
-    # set_station(n)
 
 # update the map window
 def process_updates(root, state):
